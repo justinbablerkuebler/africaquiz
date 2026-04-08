@@ -213,6 +213,7 @@
   <h2>Africa Geography Quiz</h2>
   <p>You'll be given <strong style="color:#f0a500">11 random locations</strong> — countries, capitals, and geographic features — and must click their position on the map. Score points for placing them within a reasonable distance!</p>
   <p style="color:#e0c060; font-size:0.8rem;">Green circle = your answer &nbsp;|&nbsp; Blue square = correct location</p>
+  <p style="color:#9aaa88; font-size:0.78rem;">Large regions like the Sahara are scored by distance from their borders. Rivers are scored by proximity to a central point — apologies for any inaccuracies there.</p>
   <button class="btn btn-primary" style="max-width:260px; font-size:1.05rem; padding:14px;" onclick="startQuiz()">Start Quiz</button>
 </div>
 
@@ -225,7 +226,7 @@
     <div class="score-msg" id="resMsg"></div>
     <div class="results-list" id="resList"></div>
     <button class="btn btn-primary" onclick="restartQuiz()">Play Again</button>
-    <button class="btn btn-secondary" onclick="closeResults()">See Map</button>
+    <button class="btn btn-secondary" onclick="viewAllGuesses()">View All Guesses on Map</button>
   </div>
 </div>
 
@@ -323,6 +324,13 @@ const ALL_ITEMS = [
   { name:"Uganda",          type:"country",  hint:"'Pearl of Africa'; the White Nile begins here",          lat:1.4,   lng:32.3,  tol:340 },
   { name:"Zambia",          type:"country",  hint:"Landlocked; shares Victoria Falls with Zimbabwe",        lat:-13.1, lng:27.9,  tol:500 },
   { name:"Zimbabwe",        type:"country",  hint:"South-central Africa; Great Zimbabwe ruins",             lat:-19.0, lng:29.2,  tol:400 },
+  { name:"Cape Verde",      type:"country",  hint:"Island archipelago in the Atlantic, off the West African coast", lat:16.0, lng:-24.0, tol:220 },
+  { name:"Comoros",         type:"country",  hint:"Small island nation off East Africa between Mozambique and Madagascar", lat:-11.6, lng:43.4, tol:180 },
+  { name:"Equatorial Guinea",type:"country", hint:"Only Spanish-speaking country in Africa; mainland plus Bioko Island", lat:1.7,  lng:10.3,  tol:240 },
+  { name:"Mauritius",       type:"country",  hint:"Island nation in the Indian Ocean east of Madagascar",         lat:-20.2, lng:57.6,  tol:180 },
+  { name:"São Tomé and Príncipe", type:"country", hint:"Small island nation in the Gulf of Guinea near the equator", lat:0.2,  lng:6.6,   tol:180 },
+  { name:"Seychelles",      type:"country",  hint:"Archipelago in the western Indian Ocean northeast of Madagascar", lat:-4.7, lng:55.5,  tol:200 },
+  { name:"Western Sahara",  type:"country",  hint:"Disputed territory on the northwest African coast; administered by Morocco", lat:24.2, lng:-13.0, tol:380 },
 
   // CAPITALS
   { name:"Cairo",           type:"capital",  hint:"Capital of Egypt; most populous city in Africa",         lat:30.1,  lng:31.2,  tol:150 },
@@ -370,40 +378,37 @@ const ALL_ITEMS = [
   { name:"Porto-Novo",      type:"capital",  hint:"Official capital of Benin",                              lat:6.5,   lng:2.6,   tol:150 },
   { name:"Lilongwe",        type:"capital",  hint:"Capital of Malawi",                                      lat:-14.0, lng:33.8,  tol:150 },
   { name:"Mbabane",         type:"capital",  hint:"Capital of Eswatini (formerly Swaziland)",               lat:-26.3, lng:31.1,  tol:150 },
+  { name:"Praia",           type:"capital",  hint:"Capital of Cape Verde; on Santiago island",               lat:14.9,  lng:-23.5, tol:150 },
+  { name:"Moroni",          type:"capital",  hint:"Capital of Comoros; on Grande Comore island",             lat:-11.7, lng:43.3,  tol:150 },
+  { name:"Malabo",          type:"capital",  hint:"Capital of Equatorial Guinea; on Bioko Island",           lat:3.7,   lng:8.8,   tol:150 },
+  { name:"Port Louis",      type:"capital",  hint:"Capital of Mauritius",                                    lat:-20.2, lng:57.5,  tol:150 },
+  { name:"São Tomé",        type:"capital",  hint:"Capital of São Tomé and Príncipe; in the Gulf of Guinea", lat:0.3,   lng:6.7,   tol:150 },
+  { name:"Victoria",        type:"capital",  hint:"Capital of Seychelles; smallest capital city in Africa",  lat:-4.6,  lng:55.5,  tol:150 },
+  { name:"Laayoune",        type:"capital",  hint:"Largest city and de facto capital of Western Sahara",     lat:27.2,  lng:-13.2, tol:150 },
 
-  // GEOGRAPHIC FEATURES
-  { name:"Nile River",           type:"river",    hint:"Longest river in the world; flows north to the Mediterranean",       lat:20.0,  lng:33.0,  tol:450 },
-  { name:"Congo River",          type:"river",    hint:"World's deepest river; drains the Congo Basin",                      lat:-1.0,  lng:17.0,  tol:550 },
-  { name:"Niger River",          type:"river",    hint:"Third-longest in Africa; carves a huge arc through West Africa",     lat:14.0,  lng:3.0,   tol:550 },
-  { name:"Zambezi River",        type:"river",    hint:"Fourth-longest; flows east to the Indian Ocean via Mozambique",      lat:-15.0, lng:30.0,  tol:450 },
-  { name:"Orange River",         type:"river",    hint:"Longest river in South Africa; forms the SA-Namibia border",         lat:-28.5, lng:19.5,  tol:400 },
-  { name:"Blue Nile",            type:"river",    hint:"Major Nile tributary; originates at Lake Tana in Ethiopia",          lat:11.0,  lng:37.5,  tol:350 },
-  { name:"Limpopo River",        type:"river",    hint:"Forms the border between South Africa and Botswana/Zimbabwe",        lat:-23.0, lng:31.0,  tol:400 },
-  { name:"Sahara Desert",        type:"desert",   hint:"World's largest hot desert; covers nearly all of North Africa",      lat:23.0,  lng:8.0,   tol:950 },
-  { name:"Kalahari Desert",      type:"desert",   hint:"Semi-arid desert spanning Botswana, Namibia, and South Africa",      lat:-24.0, lng:22.0,  tol:500 },
-  { name:"Namib Desert",         type:"desert",   hint:"Coastal desert; one of Earth's oldest and driest deserts",           lat:-23.0, lng:15.0,  tol:400 },
-  { name:"Danakil Depression",   type:"region",   hint:"One of the hottest, lowest places on Earth; in the Afar Triangle",  lat:13.5,  lng:40.5,  tol:250 },
-  { name:"Congo Rainforest",     type:"forest",   hint:"World's second-largest tropical rainforest",                         lat:-1.0,  lng:23.0,  tol:600 },
-  { name:"Mount Kilimanjaro",    type:"mountain", hint:"Highest peak in Africa (5,895 m); in Tanzania near Kenya",           lat:-3.1,  lng:37.4,  tol:200 },
-  { name:"Atlas Mountains",      type:"mountain", hint:"Range stretching across Morocco, Algeria, and Tunisia",              lat:31.0,  lng:-5.0,  tol:520 },
-  { name:"Drakensberg Mountains",type:"mountain", hint:"Highest range in southern Africa; along the Lesotho border",         lat:-29.5, lng:29.5,  tol:300 },
-  { name:"Ethiopian Highlands",  type:"mountain", hint:"'Roof of Africa'; centre of Ethiopian civilisation",                 lat:9.0,   lng:39.0,  tol:420 },
-  { name:"Rwenzori Mountains",   type:"mountain", hint:"'Mountains of the Moon' on the Uganda–DRC border",                  lat:0.4,   lng:29.9,  tol:200 },
-  { name:"Lake Victoria",        type:"lake",     hint:"Largest lake in Africa; source of the White Nile",                   lat:-1.1,  lng:33.0,  tol:260 },
-  { name:"Lake Tanganyika",      type:"lake",     hint:"World's second-deepest lake; on the Tanzania–DRC border",            lat:-6.0,  lng:29.5,  tol:320 },
-  { name:"Lake Malawi",          type:"lake",     hint:"Also called Lake Nyasa; southernmost of the Great Rift Valley lakes", lat:-12.0, lng:34.5, tol:320 },
-  { name:"Lake Chad",            type:"lake",     hint:"Shrinking lake at the junction of Chad, Niger, Cameroon, and Nigeria", lat:13.5, lng:14.0, tol:280 },
-  { name:"Lake Turkana",         type:"lake",     hint:"World's largest permanent desert lake; Kenya's Rift Valley",         lat:3.5,   lng:36.1,  tol:250 },
-  { name:"Lake Albert",          type:"lake",     hint:"Rift Valley lake on the DRC–Uganda border; part of the Nile system", lat:1.7,  lng:30.9,  tol:200 },
-  { name:"Victoria Falls",       type:"waterfall",hint:"World's largest waterfall by area; on the Zambia–Zimbabwe border",   lat:-17.9, lng:25.9,  tol:200 },
-  { name:"Okavango Delta",       type:"region",   hint:"World's largest inland delta; water flows into the Kalahari",        lat:-19.3, lng:22.9,  tol:300 },
-  { name:"Serengeti Plains",     type:"region",   hint:"Famous for the Great Migration of wildebeest; in Tanzania",          lat:-2.3,  lng:34.8,  tol:300 },
-  { name:"Cape of Good Hope",    type:"region",   hint:"Rocky headland at the southern tip of Africa's Cape Peninsula",      lat:-34.4, lng:18.5,  tol:200 },
-  { name:"Horn of Africa",       type:"region",   hint:"Peninsula in East Africa; includes Somalia, Eritrea, Djibouti, Ethiopia", lat:10.0, lng:49.0, tol:400 },
-  { name:"Great Rift Valley",    type:"region",   hint:"Massive geological fault running from Afar to Mozambique",            lat:-2.0,  lng:36.0,  tol:650 },
-  { name:"Sahel Region",         type:"region",   hint:"Semi-arid belt immediately south of the Sahara, stretching coast to coast", lat:14.0, lng:5.0, tol:750 },
-  { name:"Strait of Gibraltar",  type:"region",   hint:"Narrow strait between Northwest Africa and Spain",                   lat:35.9,  lng:-5.4,  tol:200 },
-  { name:"Suez Canal",           type:"region",   hint:"Man-made waterway connecting Mediterranean to the Red Sea; in Egypt", lat:30.5,  lng:32.3,  tol:200 },
+  // RIVERS
+  { name:"Nile",          type:"river", hint:"", lat:20.0,  lng:33.0,  tol:450 },
+  { name:"Congo",         type:"river", hint:"", lat:-1.0,  lng:17.0,  tol:550 },
+  { name:"Niger",         type:"river", hint:"", lat:14.0,  lng:3.0,   tol:550 },
+  { name:"Zambezi",       type:"river", hint:"", lat:-15.0, lng:30.0,  tol:450 },
+  { name:"Limpopo",       type:"river", hint:"", lat:-23.0, lng:31.0,  tol:400 },
+  { name:"Senegal River", type:"river", hint:"", lat:15.5,  lng:-14.5, tol:400 },
+  { name:"Vaal",          type:"river", hint:"", lat:-26.7, lng:27.0,  tol:350 },
+
+  // VEGETATION / CLIMATIC / GEOLOGICAL ZONES
+  { name:"Sahara Desert",             type:"desert",   hint:"", lat:23.0,  lng:8.0,  tol:350,
+    pts:[[27,-8],[25,0],[24,8],[24,17],[25,27],[28,15],[22,3],[20,12],[30,25],[23,-3]] },
+  { name:"West African Sahel",        type:"region",   hint:"", lat:14.0,  lng:-2.0, tol:350,
+    pts:[[15,-16],[14,-10],[14,-4],[14,2],[14,8],[13,14]] },
+  { name:"West African Rainforest",   type:"forest",   hint:"", lat:6.0,   lng:-5.0, tol:550 },
+  { name:"Central African Rainforest",type:"forest",   hint:"", lat:-1.0,  lng:23.0, tol:350,
+    pts:[[1,16],[0,20],[-1,24],[-2,27],[-4,22],[-3,17],[2,22]] },
+  { name:"Central African Copperbelt",type:"region",   hint:"", lat:-13.0, lng:27.5, tol:300 },
+  { name:"Ethiopian Highlands",       type:"mountain", hint:"", lat:9.0,   lng:39.0, tol:420 },
+  { name:"East African Rift",         type:"region",   hint:"", lat:-1.0,  lng:36.5, tol:250,
+    pts:[[11,41],[8,39],[3,36],[0,36],[-3,36],[-7,35]] },
+  { name:"Great Lakes Region",        type:"region",   hint:"", lat:-3.0,  lng:31.0, tol:450 },
+  { name:"Drakensberg Mountains",     type:"mountain", hint:"", lat:-29.5, lng:29.5, tol:300 },
 
   // FORMER COLONIAL TERRITORIES
   { name:"Congo Belge",          type:"former",   hint:"Belgian colonial territory; became DR Congo at independence",         lat:-4.0,  lng:21.8,  tol:650 },
@@ -434,16 +439,6 @@ const ALL_ITEMS = [
   { name:"Timbuktu",             type:"city",     hint:"Legendary Malian city; medieval centre of Islamic scholarship",      lat:16.8,  lng:-3.0,  tol:150 },
   { name:"Zanzibar City",        type:"city",     hint:"Capital of Zanzibar island; historic Swahili Coast trading port",    lat:-6.2,  lng:39.2,  tol:120 },
 
-  // ADDITIONAL RIVERS
-  { name:"Senegal River",        type:"river",    hint:"Forms the border between Senegal and Mauritania",                    lat:15.5,  lng:-14.5, tol:400 },
-  { name:"Vaal River",           type:"river",    hint:"Major tributary of the Orange River; in South Africa",               lat:-26.7, lng:27.0,  tol:350 },
-
-  // ADDITIONAL REGIONS
-  { name:"West African Rainforest", type:"forest", hint:"Tropical rainforest belt along the West African coast",            lat:6.0,   lng:-5.0,  tol:550 },
-  { name:"West African Sahel",   type:"region",   hint:"Semi-arid transition zone between the Sahara and savanna in West Africa", lat:14.0, lng:-2.0, tol:700 },
-  { name:"Central African Copperbelt", type:"region", hint:"Rich mining zone straddling Zambia and DR Congo",               lat:-13.0, lng:27.5,  tol:300 },
-  { name:"Great Lakes Region",   type:"region",   hint:"Area surrounding the African Great Lakes in east-central Africa",   lat:-3.0,  lng:31.0,  tol:450 },
-  { name:"East African Rift",    type:"region",   hint:"Eastern branch of the Great Rift Valley; runs through Kenya, Tanzania, Ethiopia", lat:-1.0, lng:36.5, tol:600 },
 ];
 
 // ─────────────────────────────────────────────
@@ -451,6 +446,8 @@ const ALL_ITEMS = [
 // ─────────────────────────────────────────────
 let quizItems = [], currentIdx = 0, score = 0, answers = [];
 let pendingMarker = null, placedLayers = [], locked = false;
+// allAnswerLayers stores all per-question layer groups, hidden during quiz, shown at end
+let allAnswerLayers = [];
 let map;
 
 // ─────────────────────────────────────────────
@@ -503,6 +500,14 @@ function haversineKm(lat1,lng1,lat2,lng2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
+// If item has pts (spine points), return distance to nearest one
+function itemDist(uLat, uLng, item) {
+  if (item.pts && item.pts.length) {
+    return Math.min(...item.pts.map(([lat,lng]) => haversineKm(uLat, uLng, lat, lng)));
+  }
+  return haversineKm(uLat, uLng, item.lat, item.lng);
+}
+
 // ─────────────────────────────────────────────
 // QUIZ FLOW
 // ─────────────────────────────────────────────
@@ -544,7 +549,7 @@ function confirmPlacement() {
   const item  = quizItems[currentIdx];
   const uLat  = pendingMarker.getLatLng().lat;
   const uLng  = pendingMarker.getLatLng().lng;
-  const dist  = Math.round(haversineKm(uLat, uLng, item.lat, item.lng));
+  const dist  = Math.round(itemDist(uLat, uLng, item));
   const ok    = dist <= item.tol;
 
   if (ok) score++;
@@ -556,19 +561,29 @@ function confirmPlacement() {
 
   const um = L.marker([uLat, uLng], { icon: userIcon(ok ? '#60fba8' : '#fb6060') })
     .bindTooltip(`Your answer: ${item.name}`, { permanent: false }).addTo(map);
-  placedLayers.push(um);
 
-  // Show correct location
-  const cm = L.marker([item.lat, item.lng], { icon: correctIcon })
+  // Show correct location (nearest spine point if multi-point item, else center)
+  let cLat = item.lat, cLng = item.lng;
+  if (item.pts && item.pts.length) {
+    [cLat, cLng] = item.pts.reduce((best, p) =>
+      haversineKm(uLat, uLng, p[0], p[1]) < haversineKm(uLat, uLng, best[0], best[1]) ? p : best
+    );
+  }
+  const cm = L.marker([cLat, cLng], { icon: correctIcon })
     .bindTooltip(`Correct: ${item.name}`, { permanent: false }).addTo(map);
-  placedLayers.push(cm);
+
+  const thisLayers = [um, cm];
 
   // Dashed line if wrong
   if (!ok) {
-    const ln = L.polyline([[uLat,uLng],[item.lat,item.lng]],
+    const ln = L.polyline([[uLat,uLng],[cLat,cLng]],
       { color:'#fb6060', weight:2, opacity:0.5, dashArray:'6,5' }).addTo(map);
-    placedLayers.push(ln);
+    thisLayers.push(ln);
   }
+
+  // Archive for end-of-round replay; hide after delay
+  allAnswerLayers.push({ layers: thisLayers, answer: answers[answers.length - 1], cLat, cLng });
+  placedLayers.push(...thisLayers);
 
   // Feedback
   const fb = document.getElementById('feedbackBox');
@@ -585,7 +600,11 @@ function confirmPlacement() {
   document.getElementById('answeredNum').textContent = currentIdx + 1;
 
   currentIdx++;
-  setTimeout(showQuestion, 1500);
+  // Hide this question's markers after a short delay, then advance
+  setTimeout(() => {
+    thisLayers.forEach(l => map.removeLayer(l));
+    setTimeout(showQuestion, 300);
+  }, 2500);
 }
 
 function showResults() {
@@ -620,19 +639,23 @@ function restartQuiz() {
   document.getElementById('resultsOverlay').classList.remove('visible');
   clearMapLayers();
   quizItems = shuffle(ALL_ITEMS).slice(0, 11);
-  currentIdx = 0; score = 0; answers = [];
+  currentIdx = 0; score = 0; answers = []; allAnswerLayers = [];
   map.setView([5, 20], 3);
   showQuestion();
 }
 
-function closeResults() {
+function viewAllGuesses() {
   document.getElementById('resultsOverlay').classList.remove('visible');
+  // Re-add all archived layers to the map
+  allAnswerLayers.forEach(({ layers }) => layers.forEach(l => l.addTo(map)));
   map.setView([5, 20], 3);
 }
 
 function clearMapLayers() {
-  placedLayers.forEach(l => map.removeLayer(l));
+  placedLayers.forEach(l => { try { map.removeLayer(l); } catch(e){} });
   placedLayers = [];
+  // Also remove any re-shown answer layers
+  allAnswerLayers.forEach(({ layers }) => layers.forEach(l => { try { map.removeLayer(l); } catch(e){} }));
   if (pendingMarker) { map.removeLayer(pendingMarker); pendingMarker = null; }
 }
 
