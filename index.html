@@ -500,17 +500,19 @@ function shuffle(arr) {
 
 function pickQuizItems() {
   const TOTAL = 11;
-  const byType = {};
+  const GEO_TYPES = new Set(['region', 'mountain', 'forest', 'desert']);
+  const buckets = { country: [], capital: [], former: [], city: [], river: [], geo: [] };
   for (const item of ALL_ITEMS) {
-    (byType[item.type] = byType[item.type] || []).push(item);
+    const key = GEO_TYPES.has(item.type) ? 'geo' : item.type;
+    buckets[key].push(item);
   }
-  // One random item from each category
+  // One random item from each bucket
   const picked = [];
-  for (const type of Object.keys(byType)) {
-    const pool = shuffle(byType[type]);
-    picked.push(pool[0]);
+  for (const pool of Object.values(buckets)) {
+    const s = shuffle(pool);
+    picked.push(s[0]);
   }
-  // Fill remaining slots with random items not already picked
+  // Fill remaining slots randomly from unpicked items
   const pickedSet = new Set(picked);
   const remaining = shuffle(ALL_ITEMS.filter(x => !pickedSet.has(x)));
   for (const item of remaining) {
