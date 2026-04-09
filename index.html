@@ -498,6 +498,28 @@ function shuffle(arr) {
   return a;
 }
 
+function pickQuizItems() {
+  const TOTAL = 11;
+  const byType = {};
+  for (const item of ALL_ITEMS) {
+    (byType[item.type] = byType[item.type] || []).push(item);
+  }
+  // One random item from each category
+  const picked = [];
+  for (const type of Object.keys(byType)) {
+    const pool = shuffle(byType[type]);
+    picked.push(pool[0]);
+  }
+  // Fill remaining slots with random items not already picked
+  const pickedSet = new Set(picked);
+  const remaining = shuffle(ALL_ITEMS.filter(x => !pickedSet.has(x)));
+  for (const item of remaining) {
+    if (picked.length >= TOTAL) break;
+    picked.push(item);
+  }
+  return shuffle(picked);
+}
+
 function haversineKm(lat1,lng1,lat2,lng2) {
   const R = 6371, dL = (lat2-lat1)*Math.PI/180, dN = (lng2-lng1)*Math.PI/180;
   const a = Math.sin(dL/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dN/2)**2;
@@ -517,7 +539,7 @@ function itemDist(uLat, uLng, item) {
 // ─────────────────────────────────────────────
 function startQuiz() {
   document.getElementById('startScreen').classList.add('hidden');
-  quizItems = shuffle(ALL_ITEMS).slice(0, 11);
+  quizItems = pickQuizItems();
   currentIdx = 0; score = 0; answers = [];
   clearMapLayers();
   showQuestion();
@@ -642,7 +664,7 @@ function showResults() {
 function restartQuiz() {
   document.getElementById('resultsOverlay').classList.remove('visible');
   clearMapLayers();
-  quizItems = shuffle(ALL_ITEMS).slice(0, 11);
+  quizItems = pickQuizItems();
   currentIdx = 0; score = 0; answers = []; allAnswerLayers = [];
   map.setView([5, 20], 3);
   showQuestion();
