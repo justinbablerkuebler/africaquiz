@@ -203,6 +203,7 @@
   .r-icon { font-size: 1rem; }
   .r-name { flex: 1; font-weight: 600; }
   .r-dist { font-size: 0.75rem; color: #7788aa; }
+  .cat-count { font-size: 0.72rem; color: #556677; }
 </style>
 </head>
 <body>
@@ -214,9 +215,20 @@
   <p>Place locations — countries, capitals, and geographic features — on the map. Score points for placing them within a reasonable distance!</p>
   <p style="color:#e0c060; font-size:0.8rem;">Green circle = your answer &nbsp;|&nbsp; Blue square = correct location</p>
   <p style="color:#9aaa88; font-size:0.78rem;">Large regions are scored by proximity to any point within them. Rivers are scored by proximity to their full course — click anywhere along the river to be correct.</p>
-  <div style="display:flex;flex-direction:column;gap:10px;max-width:260px;width:100%">
-    <button class="btn btn-primary" style="font-size:1.05rem; padding:14px;" onclick="startQuiz(false)">11 Random Locations</button>
-    <button class="btn btn-secondary" style="font-size:1rem; padding:12px; margin-top:0;" onclick="startQuiz(true)">All Locations (<span id="allCount"></span>)</button>
+  <div style="display:flex;flex-direction:column;gap:10px;max-width:300px;width:100%">
+    <button class="btn btn-primary" style="font-size:1.05rem; padding:14px;" onclick="startQuiz('random')">11 Random Locations</button>
+    <button class="btn btn-secondary" style="font-size:1rem; padding:12px; margin-top:0;" onclick="startQuiz('all')">All Locations (<span id="allCount"></span>)</button>
+    <div style="border-top:1px solid #1a3a60; padding-top:12px; margin-top:2px;">
+      <div style="font-size:0.72rem; color:#556677; text-align:center; margin-bottom:8px; text-transform:uppercase; letter-spacing:1px;">Practice by Category</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:7px;">
+        <button class="btn btn-secondary" style="padding:9px 6px; font-size:0.82rem;" onclick="startQuiz('country')">Countries <span class="cat-count" data-type="country"></span></button>
+        <button class="btn btn-secondary" style="padding:9px 6px; font-size:0.82rem;" onclick="startQuiz('capital')">Capitals <span class="cat-count" data-type="capital"></span></button>
+        <button class="btn btn-secondary" style="padding:9px 6px; font-size:0.82rem;" onclick="startQuiz('city')">Cities <span class="cat-count" data-type="city"></span></button>
+        <button class="btn btn-secondary" style="padding:9px 6px; font-size:0.82rem;" onclick="startQuiz('former')">Former Colonies <span class="cat-count" data-type="former"></span></button>
+        <button class="btn btn-secondary" style="padding:9px 6px; font-size:0.82rem;" onclick="startQuiz('river')">Rivers <span class="cat-count" data-type="river"></span></button>
+        <button class="btn btn-secondary" style="padding:9px 6px; font-size:0.82rem;" onclick="startQuiz('geo')">Geo Features <span class="cat-count" data-type="geo"></span></button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -230,6 +242,7 @@
     <div class="results-list" id="resList"></div>
     <button class="btn btn-primary" onclick="restartQuiz()">Play Again</button>
     <button class="btn btn-secondary" onclick="viewAllGuesses()">View All Guesses on Map</button>
+    <button class="btn btn-secondary" onclick="returnToMenu()">Back to Menu</button>
   </div>
 </div>
 
@@ -481,7 +494,7 @@ const ALL_ITEMS = [
 // ─────────────────────────────────────────────
 let quizItems = [], currentIdx = 0, score = 0, answers = [];
 let pendingMarker = null, placedLayers = [], locked = false;
-let allMode = false;
+let quizMode = 'random'; // 'random' | 'all' | 'country' | 'capital' | 'city' | 'former' | 'river' | 'geo'
 // allAnswerLayers stores all per-question layer groups, hidden during quiz, shown at end
 let allAnswerLayers = [];
 let map;
@@ -532,7 +545,6 @@ function shuffle(arr) {
 
 function pickQuizItems() {
   const TOTAL = 11;
-  const GEO_TYPES = new Set(['region', 'mountain', 'forest', 'desert']);
   const buckets = { country: [], capital: [], former: [], city: [], river: [], geo: [] };
   for (const item of ALL_ITEMS) {
     const key = GEO_TYPES.has(item.type) ? 'geo' : item.type;
@@ -571,10 +583,19 @@ function itemDist(uLat, uLng, item) {
 // ─────────────────────────────────────────────
 // QUIZ FLOW
 // ─────────────────────────────────────────────
-function startQuiz(useAll) {
-  allMode = !!useAll;
+const GEO_TYPES = new Set(['region', 'mountain', 'forest', 'desert']);
+
+function getQuizItems(mode) {
+  if (mode === 'all')    return shuffle(ALL_ITEMS);
+  if (mode === 'random') return pickQuizItems();
+  if (mode === 'geo')    return shuffle(ALL_ITEMS.filter(x => GEO_TYPES.has(x.type)));
+  return shuffle(ALL_ITEMS.filter(x => x.type === mode));
+}
+
+function startQuiz(mode) {
+  quizMode = mode;
   document.getElementById('startScreen').classList.add('hidden');
-  quizItems = allMode ? shuffle(ALL_ITEMS) : pickQuizItems();
+  quizItems = getQuizItems(mode);
   currentIdx = 0; score = 0; answers = [];
   clearMapLayers();
   showQuestion();
@@ -701,10 +722,17 @@ function showResults() {
 function restartQuiz() {
   document.getElementById('resultsOverlay').classList.remove('visible');
   clearMapLayers();
-  quizItems = allMode ? shuffle(ALL_ITEMS) : pickQuizItems();
+  quizItems = getQuizItems(quizMode);
   currentIdx = 0; score = 0; answers = []; allAnswerLayers = [];
   map.setView([5, 20], 3);
   showQuestion();
+}
+
+function returnToMenu() {
+  document.getElementById('resultsOverlay').classList.remove('visible');
+  clearMapLayers();
+  map.setView([5, 20], 3);
+  document.getElementById('startScreen').classList.remove('hidden');
 }
 
 function viewAllGuesses() {
@@ -729,6 +757,16 @@ window.addEventListener('load', () => {
   initMap();
   const el = document.getElementById('allCount');
   if (el) el.textContent = ALL_ITEMS.length;
+  // Populate per-category counts
+  const counts = {};
+  for (const item of ALL_ITEMS) {
+    const key = GEO_TYPES.has(item.type) ? 'geo' : item.type;
+    counts[key] = (counts[key] || 0) + 1;
+  }
+  document.querySelectorAll('.cat-count').forEach(span => {
+    const n = counts[span.dataset.type] || 0;
+    span.textContent = `(${n})`;
+  });
 });
 </script>
 </body>
